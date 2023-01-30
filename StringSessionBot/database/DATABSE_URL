@@ -1,0 +1,4 @@
+engine = create_engine(DATABASE_URL)
+BASE.metadata.bind = engine
+BASE.metadata.create_all(engine)
+SESSION = scoped_session(sessionmaker(bind=engine, autoflush=False))
