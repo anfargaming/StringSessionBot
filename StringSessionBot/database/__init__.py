@@ -1,10 +1,20 @@
 from env import DATABASE_URL
-from sqlalchemy import Column, BigInteger, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 
+def start() -> scoped_session:
+    engine = create_engine(DATABASE_URL)
+    BASE.metadata.bind = engine
+    BASE.metadata.create_all(engine)
+    return scoped_session(sessionmaker(bind=engine, autoflush=False))
+
+
 BASE = declarative_base()
+SESSION = start()
+
+from sqlalchemy import Column, BigInteger
 
 
 class Users(BASE):
@@ -16,13 +26,15 @@ class Users(BASE):
         self.user_id = user_id
         self.channels = channels
 
-
-def start() -> scoped_session:
-    engine = create_engine(DATABASE_URL)
-    BASE.metadata.bind = engine
-    BASE.metadata.create_all(engine)
-    return scoped_session(sessionmaker(bind=engine, autoflush=False))
+    # def __repr__(self):
+    #     return "<User {} {} {} ({})>".format(self.thumbnail, self.thumbnail_status, self.video_to, self.user_id)
 
 
-SESSION = start()
+Users.__table__.create(checkfirst=True)
 
+
+async def num_users():
+    try:
+        return SESSION.query(Users).count()
+    finally:
+        SESSION.close()
