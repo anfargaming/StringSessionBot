@@ -1,25 +1,33 @@
-from sqlalchemy import Column, BigInteger
-from StringSessionBot.database import BASE, SESSION
+ # Import the necessary modules
+from sqlalchemy import Column, BigInteger, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
+# Define the base for the SQLAlchemy ORM
+Base = declarative_base()
 
-class Users(BASE):
+# Define the "users" table
+class Users(Base):
     __tablename__ = "users"
     __table_args__ = {'extend_existing': True}
     user_id = Column(BigInteger, primary_key=True)
+    channels = Column(BigInteger)
 
     def __init__(self, user_id, channels=None):
         self.user_id = user_id
         self.channels = channels
 
-    # def __repr__(self):
-    #     return "<User {} {} {} ({})>".format(self.thumbnail, self.thumbnail_status, self.video_to, self.user_id)
+# Connect to the database and create the table if it doesn't exist
+engine = create_engine("sqlite:///database.db")
+Base.metadata.create_all(engine, checkfirst=True)
 
+# Create a session to interact with the database
+Session = sessionmaker(bind=engine)
+session = Session()
 
-Users.__table__.create(checkfirst=True)
-
-
-async def num_users():
+# Function to return the number of users in the "users" table
+def num_users():
     try:
-        return SESSION.query(Users).count()
+        return session.query(Users).count()
     finally:
-        SESSION.close()
+        session.close()
